@@ -9,7 +9,7 @@
 	"badge_colour": "59396c",
 	"badge_text_colour": "fbbbf2",
 	"display_name": "Pandemonium",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"dependencies": [
 		"Steamodded (>=26.289.*)",
 		"Lovely (>=0.9)"

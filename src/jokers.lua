@@ -171,9 +171,12 @@ SMODS.Joker {
   end,
   calculate = function (self, card, context)
     if (context.pre_discard) then
-      card.ability.config.extra.pdem_i = 1
+      sendInfoMessage(inspect(card.ability.extra),'pre-discard')
+      card.ability.extra.pdem_i = 1
       card.ability.extra.discard_count = #context.full_hand
+      sendInfoMessage(inspect(card.ability.extra),'pre-discard(2)')
     elseif (context.discard) then
+      sendInfoMessage(inspect(card.ability.extra),'discard')
       G.E_MANAGER:add_event(Event({
         func = function ()
           draw_card(
@@ -186,7 +189,7 @@ SMODS.Joker {
             0.005,
             card.ability.extra.pdem_i % 2 == 0,
             nil,
-            math.max((21 - card.ability.extra.ipdem_i) / 20, 0.7)
+            math.max((21 - card.ability.extra.pdem_i) / 20, 0.7)
           )
           card.ability.extra.pdem_i = card.ability.extra.pdem_i + 1
           return true
