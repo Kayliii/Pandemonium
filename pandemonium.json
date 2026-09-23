@@ -1,0 +1,20 @@
+{
+	"id": "kayli_pandemonium",
+	"name": "Pandemonium",
+	"author": ["Kayliii"],
+	"description": "A chaotic mod. Currently in development, so much more content is coming.",
+	"prefix": "pdem",
+	"main_file": "pandemonium.lua",
+	"priority": -20,
+	"badge_colour": "59396c",
+	"badge_text_colour": "fbbbf2",
+	"display_name": "Pandemonium",
+	"version": "0.1.0",
+	"dependencies": [
+		"Steamodded (>=26.289.*)",
+		"Lovely (>=0.9)"
+	],
+	"conflicts": [],
+	"provides": [], 
+	"dump_loc": false
+}

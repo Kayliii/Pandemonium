@@ -1,0 +1,146 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# create_UIBox_HUD
+# Use distinct color for hands so it can be modified
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''                    {n=G.UIT.O, config={object = DynaText({string = {{ref_table = G.GAME.current_round, ref_value = 'hands_left'}}, font = G.LANGUAGES['en-us'].font, colours = {G.C.BLUE},shadow = true, rotate = true, scale = 2*scale}),id = 'hand_UI_count'}},'''
+position = 'at'
+match_indent = true
+payload = '''                    {n=G.UIT.O, config={object = DynaText({string = {{ref_table = G.GAME.current_round, ref_value = 'hands_left'}}, font = G.LANGUAGES['en-us'].font, colours = {G.C.UI_HANDS},shadow = true, rotate = true, scale = 2*scale}),id = 'hand_UI_count'}},'''
+
+
+# create_UIBox_HUD
+# Use distinct color for discards so it can be modified
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''                      {n=G.UIT.O, config={object = DynaText({string = {{ref_table = G.GAME.current_round, ref_value = 'discards_left'}}, font = G.LANGUAGES['en-us'].font, colours = {G.C.RED},shadow = true, rotate = true, scale = 2*scale}),id = 'discard_UI_count'}},'''
+position = 'at'
+match_indent = true
+payload = '''                      {n=G.UIT.O, config={object = DynaText({string = {{ref_table = G.GAME.current_round, ref_value = 'discards_left'}}, font = G.LANGUAGES['en-us'].font, colours = {G.C.UI_DISCARDS},shadow = true, rotate = true, scale = 2*scale}),id = 'discard_UI_count'}},'''
+
+
+
+# create_UIBox_blind_choice
+# Show the correct reward money
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''G.GAME.orbital_choices = G.GAME.orbital_choices or {}'''
+position = 'after'
+match_indent = true
+payload = '''local _dollars = blind_choice.config.dollars
+if type == 'Boss' and G.GAME.modifiers.pdem_showdown_smaller_reward then
+  _dollars = math.floor(_dollars * 5 / 8)
+end
+'''
+
+# create_UIBox_blind_choice
+# Show the correct reward money
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''{n=G.UIT.T, config={text = string.rep(localize("$"), blind_choice.config.dollars)..'+', scale = 0.35, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.MONEY, shadow = not disabled}}'''
+position = 'at'
+match_indent = true
+payload = '''{n=G.UIT.T, config={text = string.rep(localize("$"), _dollars)..'+', scale = 0.35, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.MONEY, shadow = not disabled}}'''
+
+
+# create_UIBox_blind_choice
+# Allow skipping blinds
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''elseif not run_info then'''
+position = 'before'
+match_indent = true
+payload = '''
+elseif not blind_choice.config.unskippable and #SMODS.find_card('j_pdem_john_balatro', false) > 0 and not blind_choice.config.boss.showdown then
+  extras = create_UIBox_blind_tag('Boss', run_info, 'pdem_skip_boss_blind')
+'''
+
+# create_UIBox_blind_tag
+# Allow custom title for blind button
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''function create_UIBox_blind_tag(blind_choice, run_info)'''
+position = 'at'
+match_indent = true
+payload = '''
+function create_UIBox_blind_tag(blind_choice, run_info, _button_title)
+  if _button_title == nil then _button_title = 'b_skip_blind' end
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''{n=G.UIT.T, config={text = localize('b_skip_blind'), scale = 0.4, colour = G.C.UI.TEXT_INACTIVE}}'''
+position = 'at'
+match_indent = true
+payload = '''{n=G.UIT.T, config={text = localize(_button_title), scale = 0.4, colour = G.C.UI.TEXT_INACTIVE}}'''
+
+# create_UIBox_current_hand_row
+# Show the correct hand name
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''function create_UIBox_current_hand_row(handname, simple, in_collection)'''
+position = 'after'
+match_indent = true
+payload = '''
+local hand_key = handname
+if SMODS.PokerHands[handname] and SMODS.PokerHands[handname].modify_key and type(SMODS.PokerHands[handname].modify_key) == "function" then
+  hand_key = SMODS.PokerHands[handname]:modify_key()
+end
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''{n=G.UIT.T, config={text = ' '..localize(handname,'poker_hands'), scale = 0.45, colour = G.C.UI.TEXT_LIGHT, shadow = true}}'''
+position = 'at'
+match_indent = true
+payload = '''{n=G.UIT.T, config={text = ' '..localize(hand_key,'poker_hands'), scale = 0.45, colour = G.C.UI.TEXT_LIGHT, shadow = true}}'''
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''{n=G.UIT.T, config={text = localize(handname,'poker_hands'), scale = 0.5, colour = G.C.UI.TEXT_LIGHT, shadow = true}}'''
+position = 'at'
+match_indent = true
+payload = '''{n=G.UIT.T, config={text = localize(hand_key,'poker_hands'), scale = 0.5, colour = G.C.UI.TEXT_LIGHT, shadow = true}}'''
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''{n=G.UIT.R, config={align = "cm", padding = 0.05, r = 0.1, colour = darken(G.C.JOKER_GREY, 0.1), emboss = 0.05, hover = true, force_focus = true, on_demand_tooltip = {text = localize(handname, 'poker_hand_descriptions'), filler = {func = create_UIBox_hand_tip, args = handname}}}, nodes={'''
+position = 'at'
+match_indent = true
+payload = '''{n=G.UIT.R, config={align = "cm", padding = 0.05, r = 0.1, colour = darken(G.C.JOKER_GREY, 0.1), emboss = 0.05, hover = true, force_focus = true, on_demand_tooltip = {text = localize(hand_key, 'poker_hand_descriptions'), filler = {func = create_UIBox_hand_tip, args = handname}}}, nodes={'''
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''or {n=G.UIT.R, config={align = "cm", padding = 0.05, r = 0.1, colour = darken(G.C.JOKER_GREY, 0.1), force_focus = true, emboss = 0.05, hover = true, on_demand_tooltip = {text = localize(handname, 'poker_hand_descriptions'), filler = {func = create_UIBox_hand_tip, args = handname}}, focus_args = {snap_to = (simple and handname == 'Straight Flush')}}, nodes={'''
+position = 'at'
+match_indent = true
+payload = '''or {n=G.UIT.R, config={align = "cm", padding = 0.05, r = 0.1, colour = darken(G.C.JOKER_GREY, 0.1), force_focus = true, emboss = 0.05, hover = true, on_demand_tooltip = {text = localize(hand_key, 'poker_hand_descriptions'), filler = {func = create_UIBox_hand_tip, args = handname}}, focus_args = {snap_to = (simple and handname == 'Straight Flush')}}, nodes={'''
+
+
+# G.UIDEF.card_h_popup
+# Enhanced jokers in your deck get special UI here
+[[patches]]
+[patches.pattern]
+target = 'functions/UI_definitions.lua'
+pattern = '''if obj and obj.set_badges and type(obj.set_badges) == 'function' then'''
+position = 'before'
+match_indent = true
+payload = '''
+if card.ability and card.ability.pdem_enhancement then
+  local enhancement_str = localize{type = 'name_text', key = card.ability.pdem_enhancement, set = 'Enhanced'}
+  local enhancement_type_colour = get_type_colour(G.P_CENTERS[card.ability.pdem_enhancement], card.ability.pdem_enhancement_fake)
+  local enhancement_type_text_colour = SMODS.get_card_type_text_colour(G.P_CENTERS[card.ability.pdem_enhancement], card)
+  badges[#badges + 1] = create_badge(enhancement_str, enhancement_type_colour, enhancement_type_text_colour, 1.2)
+end
+'''

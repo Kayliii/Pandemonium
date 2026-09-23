@@ -1,0 +1,14 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# G.FUNCS.cash_out
+# Allow skipping the boss blind
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+pattern = '''self.GAME.round_resets.blind_tags.Big = G.SETTINGS.tutorial_progress and G.SETTINGS.tutorial_progress.forced_tags and G.SETTINGS.tutorial_progress.forced_tags[2] or get_next_tag_key()'''
+position = 'after'
+match_indent = true
+payload = '''self.GAME.round_resets.blind_tags.Boss = get_next_tag_key('boss')'''

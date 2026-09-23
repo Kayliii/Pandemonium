@@ -1,0 +1,466 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# Card:set_cost
+# Look at whether an antique sticker exists on this joker that should affect the cost.
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = "    self.extra_cost = 0 + G.GAME.inflation"
+position = 'after'
+match_indent = true
+payload = '''
+-- Add extra cost to antique cards
+if self.ability.pdem_antique then
+  self.extra_cost = self.extra_cost + self.base_cost
+end
+'''
+
+
+# Card:calculate_joker
+# Check for the odds that the card doesn't activate
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''function Card:calculate_joker(context)'''
+position = 'after'
+match_indent = true
+payload = '''
+if self.ability.pdem_lazy and not context.pseudorandom_result and not context.fix_probability and not context.mod_probability then
+  self.ability.pdem_lazy_prng_index = (self.ability.pdem_lazy_prng_index or 0) + 1
+  if (self.ability.pdem_lazy_prng or {0, 0, 1})[(self.ability.pdem_lazy_prng_index % #self.ability.pdem_lazy_prng) + 1] then return nil end
+end
+'''
+
+
+# Card:use_consumeable
+# Implement a destroyed cards career stat
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = ''' SMODS.calculate_context({ remove_playing_cards = true, removed = destroyed_cards })'''
+position = 'after'
+match_indent = true
+payload = '''
+inc_career_stat('pdem_playing_cards_destroyed', #destroyed_cards)
+check_for_unlock({ type = 'career_stat', statname = 'pdem_playing_cards_destroyed' })
+'''
+
+# Card:calculate_joker
+# Do an unlock check for Cavendish destruction
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if self.ability.name == 'Gros Michel' or self.ability.name == 'Cavendish' then
+                    if SMODS.pseudorandom_probability(self, self.ability.name == 'Cavendish' and 'cavendish' or 'gros_michel', 1, self.ability.extra.odds) then '''
+position = 'after'
+match_indent = true
+payload = '''if self.ability.name == 'Cavendish' then
+  check_for_unlock({ type = 'pdem_cavendish' })
+end'''
+
+
+
+# Card:get_chip_mult
+# Track the type of lucky card activation
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if SMODS.pseudorandom_probability(self, 'lucky_mult', 1, 5) then'''
+position = 'after'
+match_indent = true
+payload = '''self.pdem_lucky_mult = true'''
+
+# Card:get_p_dollars
+# Track the type of lucky card activation
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if SMODS.pseudorandom_probability(self, 'lucky_money', 1, 15) then'''
+position = 'after'
+match_indent = true
+payload = '''self.pdem_lucky_money = true'''
+
+
+# Card:calculate_joker
+# Exit early if it's not a joker at all
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''function Card:calculate_joker(context)'''
+position = 'after'
+match_indent = true
+payload = '''
+if self.ability.set ~= 'Joker' then return end
+'''
+
+# Card:calculate_joker
+# Fix Blueprint to work in your hand or in your play area
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i] == self then other_joker = G.jokers.cards[i+1] end
+            end'''
+position = 'after'
+match_indent = true
+payload = '''
+for i = 1, #G.hand.cards do
+  if G.hand.cards[i] == self then other_joker = G.hand.cards[i+1] end
+end
+for i = 1, #G.play.cards do
+  if G.play.cards[i] == self then other_joker = G.play.cards[i+1] end
+end
+'''
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''main_end = (self.area and self.area == G.jokers) and {'''
+position = 'at'
+match_indent = true
+payload = '''main_end = (self.area and (self.area == G.jokers or self.area == G.hand)) and {'''
+
+
+# Card:update
+# Patch Cloud 9 to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if v:get_id() == 9 then self.ability.nine_tally = self.ability.nine_tally+1 end'''
+position = 'at'
+match_indent = true
+payload = '''if v:get_id() == 9 or v.base.value == '9' or v.config.center.config.pdem_is_rank_9 then self.ability.nine_tally = self.ability.nine_tally+1 end'''
+
+# Card:calculate_joker
+# Patch Shoot The Moon to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 12 then'''
+position = 'at'
+match_indent = true
+payload = '''context.other_card:get_id() == 12 or context.other_card.config.center.config.pdem_is_rank_Queen then'''
+
+# Card:calculate_joker
+# Patch Baron to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 13 then'''
+position = 'at'
+match_indent = true
+payload = '''context.other_card:get_id() == 13 or context.other_card.config.center.config.pdem_is_rank_King then'''
+
+# Card:calculate_joker
+# Patch Hack to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 2 or 
+                context.other_card:get_id() == 3 or 
+                context.other_card:get_id() == 4 or 
+                context.other_card:get_id() == 5) then'''
+position = 'at'
+match_indent = true
+payload = '''context.other_card:get_id() == 2 or 
+                context.other_card:get_id() == 3 or 
+                context.other_card:get_id() == 4 or 
+                context.other_card:get_id() == 5 or
+                context.other_card.config.center.config.pdem_is_rank_2 or
+                context.other_card.config.center.config.pdem_is_rank_3 or
+                context.other_card.config.center.config.pdem_is_rank_4 or
+                context.other_card.config.center.config.pdem_is_rank_5) then'''
+
+# Card:calculate_joker
+# Patch Mail-In Rebate to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if self.ability.name == 'Mail-In Rebate' and
+            not context.other_card.debuff and
+            context.other_card:get_id() == G.GAME.current_round.mail_card.id then
+                ease_dollars(self.ability.extra)
+                return {
+                    message = localize('$')..self.ability.extra,
+                    colour = G.C.MONEY,
+                    card = self
+                }
+            end'''
+position = 'at'
+match_indent = true
+payload = '''if self.ability.name == 'Mail-In Rebate'
+            and not context.other_card.debuff then
+              if context.other_card:get_id() == G.GAME.current_round.mail_card.id then
+                  ease_dollars(self.ability.extra)
+                  return {
+                      message = localize('$')..self.ability.extra,
+                      colour = G.C.MONEY,
+                      card = self
+                  }
+              end
+              local value
+              for key, rank in pairs(SMODS.Ranks) do
+                if rank.id == G.GAME.current_round.mail_card.id then
+                  value = key
+                end
+              end
+
+              if value and context.other_card.config.center.config['pdem_is_rank_'..value] then
+                return {
+                  message = localize('$')..self.ability.extra,
+                  colour = G.C.MONEY,
+                  card = self
+                }
+              end
+            end
+            '''
+
+# Card:calculate_joker
+# Patch Hit the Road to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 11 and not context.blueprint then'''
+position = 'at'
+match_indent = true
+payload = '''(context.other_card:get_id() == 11 or context.other_card.config.center.config.pdem_is_rank_Jack) and not context.blueprint then'''
+
+# Card:calculate_joker
+# Patch Wee Joker to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 2 and not context.blueprint then'''
+position = 'at'
+match_indent = true
+payload = '''(context.other_card:get_id() == 2 or context.other_card.config.center.config.pdem_is_rank_2) and not context.blueprint then'''
+
+# Card:calculate_joker
+# Patch 8 Ball to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if (context.other_card:get_id() == 8) and (SMODS.pseudorandom_probability(self, '8ball', 1, self.ability.extra)) then'''
+position = 'at'
+match_indent = true
+payload = '''if (context.other_card:get_id() == 8 or context.other_card.config.center.config.pdem_is_rank_8) and (SMODS.pseudorandom_probability(self, '8ball', 1, self.ability.extra)) then'''
+
+# Card:calculate_joker
+# Patch Idol to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if self.ability.name == 'The Idol' and
+                    context.other_card:get_id() == G.GAME.current_round.idol_card.id and 
+                    context.other_card:is_suit(G.GAME.current_round.idol_card.suit) then
+                        return {
+                            x_mult = self.ability.extra,
+                            colour = G.C.RED,
+                            card = self
+                        }
+                    end'''
+position = 'at'
+match_indent = true
+payload = '''if self.ability.name == 'The Idol' and context.other_card:is_suit(G.GAME.current_round.idol_card.suit) then
+              if context.other_card:get_id() == G.GAME.current_round.idol_card.id then
+                  return {
+                    x_mult = self.ability.extra,
+                    colour = G.C.RED,
+                    card = self
+                  }
+              end
+
+              local value
+              for key, rank in pairs(SMODS.Ranks) do
+                if rank.id == G.GAME.current_round.idol_card.id then
+                  value = key
+                end
+              end
+
+              if value and context.other_card.config.center.config['pdem_is_rank_'..value] then
+                return {
+                  x_mult = self.ability.extra,
+                  colour = G.C.RED,
+                  card = self
+                }
+              end
+            end
+'''
+
+# Card:calculate_joker
+# Patch Scholar to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 14 then'''
+position = 'at'
+match_indent = true
+payload = '''(context.other_card:get_id() == 14 or context.other_card.config.center.config.pdem_is_rank_Ace) then'''
+
+# Card:calculate_joker
+# Patch Walkie Talkie to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''(context.other_card:get_id() == 10 or context.other_card:get_id() == 4) then'''
+position = 'at'
+match_indent = true
+payload = '''(context.other_card:get_id() == 10 or context.other_card:get_id() == 4 or context.other_card.config.center.config.pdem_is_rank_10 or context.other_card.config.center.config.pdem_is_rank_4) then'''
+
+# Card:calculate_joker
+# Patch Fibonacci to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() == 2 or 
+                context.other_card:get_id() == 3 or 
+                context.other_card:get_id() == 5 or 
+                context.other_card:get_id() == 8 or 
+                context.other_card:get_id() == 14) then'''
+position = 'at'
+match_indent = true
+payload = '''context.other_card:get_id() == 2 or 
+                context.other_card:get_id() == 3 or 
+                context.other_card:get_id() == 5 or 
+                context.other_card:get_id() == 8 or 
+                context.other_card:get_id() == 14 or
+                context.other_card.config.center.config.pdem_is_rank_2 or
+                context.other_card.config.center.config.pdem_is_rank_3 or
+                context.other_card.config.center.config.pdem_is_rank_5 or
+                context.other_card.config.center.config.pdem_is_rank_8 or
+                context.other_card.config.center.config.pdem_is_rank_Ace
+                ) then'''
+
+# Card:calculate_joker
+# Patch Even Steven to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''context.other_card:get_id() <= 10 and 
+                context.other_card:get_id() >= 0 and
+                context.other_card:get_id()%2 == 0'''
+position = 'at'
+match_indent = true
+payload = '''((context.other_card:get_id() <= 10 and 
+                context.other_card:get_id() >= 0 and
+                context.other_card:get_id()%2 == 0) or (
+                  context.other_card.config.center.config.pdem_is_rank_2 or
+                  context.other_card.config.center.config.pdem_is_rank_4 or
+                  context.other_card.config.center.config.pdem_is_rank_6 or
+                  context.other_card.config.center.config.pdem_is_rank_8 or
+                  context.other_card.config.center.config.pdem_is_rank_10
+                ))'''
+
+# Card:calculate_joker
+# Patch Odd Todd to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''((context.other_card:get_id() <= 10 and 
+                context.other_card:get_id() >= 0 and
+                context.other_card:get_id()%2 == 1) or
+                (context.other_card:get_id() == 14))'''
+position = 'at'
+match_indent = true
+payload = '''(((context.other_card:get_id() <= 10 and 
+                context.other_card:get_id() >= 0 and
+                context.other_card:get_id()%2 == 1) or
+                (context.other_card:get_id() == 14)) or (
+                  context.other_card.config.center.config.pdem_is_rank_Ace or
+                  context.other_card.config.center.config.pdem_is_rank_3 or
+                  context.other_card.config.center.config.pdem_is_rank_5 or
+                  context.other_card.config.center.config.pdem_is_rank_7 or
+                  context.other_card.config.center.config.pdem_is_rank_9
+                ))'''
+
+# Card:calculate_joker
+# Patch Triboulet to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''(context.other_card:get_id() == 12 or context.other_card:get_id() == 13) then'''
+position = 'at'
+match_indent = true
+payload = ''' (context.other_card:get_id() == 12 or context.other_card:get_id() == 13 or context.other_card.config.center.config.pdem_is_rank_Queen or context.other_card.config.center.config.pdem_is_rank_King) then'''
+
+# Card:calculate_joker
+# Patch Superposition to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if context.scoring_hand[i]:get_id() == 14 then aces = aces + 1 end'''
+position = 'at'
+match_indent = true
+payload = '''if context.scoring_hand[i]:get_id() == 14 or context.scoring_hand[i].config.center.config.pdem_is_rank_Ace then aces = aces + 1 end'''
+
+# Card:calculate_joker
+# Patch Sixth Sense to work with Riff-Raff Deck correctly
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if self.ability.name == 'Sixth Sense' and #context.full_hand == 1 and context.full_hand[1]:get_id() == 6 and not context.full_hand[1].sixth_sense and G.GAME.current_round.hands_played == 0 then'''
+position = 'at'
+match_indent = true
+payload = '''if self.ability.name == 'Sixth Sense' and #context.full_hand == 1 and (context.full_hand[1]:get_id() == 6 or context.full_hand[1].config.center.config.pdem_is_rank_6) and not context.full_hand[1].sixth_sense and G.GAME.current_round.hands_played == 0 then'''
+
+# Card:calculate_joker
+# Patch end-of-round jokers
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''elseif context.end_of_round then'''
+position = 'at'
+match_indent = true
+payload = '''elseif (context.end_of_round and self.area == G.jokers) or (context.end_of_round and context.main_eval and (self.area == G.hand or self.area == G.play)) then'''
+
+# Card:calculate_joker
+# Patch on-hand-played (before context) jokers
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if context.before then'''
+position = 'at'
+match_indent = true
+payload = '''if (context.before and self.area == G.jokers) or (context.before and context.main_eval and (self.area == G.hand or self.area == G.play)) then'''
+
+# Card:use_consumeable
+# Enhancement consumables don't work normally on joker-suited or joker-ranked playing cards.
+# Instead, use custom enhancement markers.
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function() G.hand.highlighted[i]:set_ability(G.P_CENTERS[self.ability.consumeable.mod_conv]);return true end }))'''
+position = 'at'
+match_indent = true
+payload = '''
+local card = G.hand.highlighted[i]
+if card.base.value == 'pdem_joker_rank' then
+  local center = G.P_CENTERS[self.ability.consumeable.mod_conv]
+  G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+    card.ability.pdem_enhancement = self.ability.consumeable.mod_conv
+    card.ability.pdem_enhancement_fake = SMODS.Center.create_fake_card(center)
+    card.ability.pdem_enhancement_fake.base = { nominal = 0 }
+    card.ability.pdem_enhancement_fake.ability.bonus = card.ability.pdem_enhancement_fake.ability.bonus or 0
+    card.ability.pdem_enhancement_fake.ability.p_dollars = card.ability.pdem_enhancement_fake.ability.p_dollars or 0
+    card.ability.pdem_enhancement_fake.ability.effect = center.effect
+    return true
+  end
+}))
+else
+  G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function() card:set_ability(G.P_CENTERS[self.ability.consumeable.mod_conv]);return true end }))
+end
+'''
+
+# Card:calculate_seal
+# Make red seals work correctly when the hand and play areas are also joker areas.
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if context.repetition then'''
+position = 'at'
+match_indent = true
+payload = '''
+if context.repetition and ((not context.pdem_joker_only and self.base.value ~= 'pdem_joker_rank') or (context.pdem_joker_only and self.base.value == 'pdem_joker_rank')) then
+'''

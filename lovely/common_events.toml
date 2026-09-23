@@ -1,0 +1,98 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# get_new_boss
+# Enforces the "showdowns only" challenge
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = "elseif options.ignore_showdown_check then"
+position = 'before'
+match_indent = true
+payload = '''
+elseif G.GAME.modifiers.pdem_showdown_only then
+  if v.boss.showdown then
+    eligible_bosses[k] = res and true or nil
+  end
+'''
+
+# update_hand_text
+# Makes composite hand levels look prettier
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = "G.hand_text_area.hand_level.config.colour = G.C.HAND_LEVELS[1]"
+position = 'at'
+match_indent = true
+payload = '''
+local max_level = 1
+for sub in string.gmatch(vals.level, "%d+") do
+  max_level = math.max(max_level, tonumber(sub))
+end
+G.hand_text_area.hand_level.config.colour = G.C.HAND_LEVELS[math.min(max_level, 7)]
+'''
+
+
+# eval_card
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = "for _,v in ipairs(areas) do area_set[v] = true end"
+position = 'after'
+match_indent = true
+payload = '''
+area_set[G.play] = true
+area_set[G.hand] = true
+'''
+
+
+# reset_mail_rank
+# Exclude joker suit and rank
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''if v.ability.effect ~= 'Stone Card' then
+            if not SMODS.has_no_rank(v) then'''
+position = 'at'
+match_indent = true
+payload = '''
+if v.ability.effect ~= 'Stone Card' and v.base.suit ~= 'pdem_joker_suit' and v.base.value ~= 'pdem_joker_rank' then
+  if not SMODS.has_no_rank(v) then
+'''
+
+
+# reset_idol_card
+# Exclude joker suit and rank
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''if v.ability.effect ~= 'Stone Card' then
+            if not SMODS.has_no_suit(v) and not SMODS.has_no_rank(v) then'''
+position = 'at'
+match_indent = true
+payload = '''
+if v.ability.effect ~= 'Stone Card' and v.base.suit ~= 'pdem_joker_suit' and v.base.value ~= 'pdem_joker_rank' then
+  if not SMODS.has_no_suit(v) and not SMODS.has_no_rank(v) then
+'''
+
+
+
+
+# generate_card_ui
+# Enhanced jokers in your deck get special UI here
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''if main_end then '''
+position = 'before'
+match_indent = true
+payload = '''
+if card_type == 'Joker' and card.ability.pdem_enhancement then
+  local enhancement_ui = generate_card_ui(G.P_CENTERS[card.ability.pdem_enhancement], nil, nil, 'Enhanced', {}, nil, nil, nil, card.ability.pdem_enhancement_fake)
+  for i = 1, #enhancement_ui.main do
+    desc_nodes[#desc_nodes+1] = enhancement_ui.main[i]
+  end
+end
+'''

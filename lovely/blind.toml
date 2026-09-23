@@ -1,0 +1,32 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# Blind:set_blind
+# Put the correct reward money for the Showdown Smaller Reward rule
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+pattern = "self.dollars = blind and blind.dollars or 0"
+position = 'after'
+match_indent = true
+payload = '''
+if blind and blind.boss and G.GAME.modifiers.pdem_showdown_smaller_reward then
+  self.dollars = math.floor(self.dollars * 5 / 8)
+end
+'''
+
+# Blind:load
+# Put the correct reward money for the Showdown Smaller Reward rule
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+pattern = "self.dollars = blindTable.dollars"
+position = 'after'
+match_indent = true
+payload = '''
+if blindTable.boss and G.GAME.modifiers.pdem_showdown_smaller_reward then
+  self.dollars = math.floor(self.dollars * 5 / 8)
+end
+'''

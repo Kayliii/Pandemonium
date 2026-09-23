@@ -1,0 +1,53 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# get_X_same
+# Handle joker hands appropriately 
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+pattern = """if hand[i]:get_id() == hand[j]:get_id() and i ~= j then
+        table.insert(curr, hand[j])
+      end"""
+position = 'at'
+match_indent = true
+payload = '''
+if i ~= j then
+  if hand[i].base.value ~= 'pdem_joker_rank' and hand[j].base.value ~= 'pdem_joker_rank' then
+    if hand[i]:get_id() == hand[j]:get_id() then
+      table.insert(curr, hand[j])
+    end
+  elseif hand[i].base.value ~= 'pdem_joker_rank' then
+    if hand[j].config.center.config['pdem_is_rank_'..hand[i].base.value] then
+      table.insert(curr, hand[j])
+    end
+  elseif hand[j].base.value ~= 'pdem_joker_rank' then
+    if hand[i].config.center.config['pdem_is_rank_'..hand[j].base.value] then
+      table.insert(curr, hand[j])
+    end
+  elseif hand[i].config.center_key == hand[j].config.center_key then
+    table.insert(curr, hand[j])
+  else
+    for rank, _ in pairs(SMODS.Ranks) do
+      if hand[i].config.center.config['pdem_is_rank_'..rank] and hand[j].config.center.config['pdem_is_rank_'..rank] then
+        table.insert(curr, hand[j])
+        break
+      end
+    end
+  end
+end
+'''
+
+# get_flush
+# Handle joker hands appropriately 
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+pattern = """if hand[i]:is_suit(suit, nil, true) then flush_count = flush_count + 1;  t[#t+1] = hand[i] end """
+position = 'at'
+match_indent = true
+payload = '''
+if suit ~= 'pdem_joker_suit' and hand[i]:is_suit(suit, nil, true) then flush_count = flush_count + 1;  t[#t+1] = hand[i] end
+'''

@@ -1,0 +1,211 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# G.FUNCS.check_for_buy_space
+# Helper function to check for the gold star sticker
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "G.FUNCS.check_for_buy_space = function(card)"
+position = 'before'
+match_indent = true
+payload = '''
+
+function pdem_gold_star_conflict (c)
+  if not c.ability.pdem_gold_star then return false end
+
+  for _, v in ipairs(SMODS.get_card_areas('jokers')) do
+    for _, card in ipairs(v.cards) do
+      if card.ability.pdem_gold_star then return true end
+    end
+  end
+  return false
+end
+
+'''
+
+# G.FUNCS.check_for_buy_space
+# Refuse to buy joker if player already owns a gold star joker
+# Also, allow buying a joker when playing the Riff-Raff Deck.
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "G.FUNCS.check_for_buy_space = function(card)"
+position = 'after'
+match_indent = true
+payload = '''
+  if card.ability.set == 'Joker' and pdem_gold_star_conflict(card) then
+    alert_no_space(card, card.ability.consumeable and G.consumeables or G.jokers)
+    return false
+  end
+  if G.GAME.selected_back and G.GAME.selected_back.effect.center.key == 'b_pdem_riff_raff' then
+    return true
+  end
+'''
+
+# G.FUNCS.can_select_card
+# Refuse to select joker if player already owns a gold star joker
+# Also, allow selecting a joker when playing the Riff-Raff Deck.
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "  G.FUNCS.can_select_card = function(e)"
+position = 'after'
+match_indent = true
+payload = '''
+    if e.config.ref_table.ability.set == 'Joker' and pdem_gold_star_conflict(e.config.ref_table) then
+      e.config.colour = G.C.UI.BACKGROUND_INACTIVE
+      e.config.button = nil
+      return nil
+    end
+    if G.GAME.selected_back and G.GAME.selected_back.effect.center.key == 'b_pdem_riff_raff' then
+      return true
+    end
+'''
+
+# G.FUNCS.cash_out
+# Allow skipping the boss blind
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "G.GAME.round_resets.blind_tags.Big = get_next_tag_key()"
+position = 'after'
+match_indent = true
+payload = '''G.GAME.round_resets.blind_tags.Boss = get_next_tag_key('boss')'''
+
+# G.FUNCS.skip_blind
+# Allow skipping the boss blind
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "G.FUNCS.skip_blind = function(e)"
+position = 'before'
+match_indent = true
+payload = '''
+
+G.FUNCS.pdem_skip_boss_blind = function(e)
+  G.CONTROLLER.locks.skip_blind = true
+  G.E_MANAGER:add_event(Event({
+    no_delete = true,
+    trigger = 'after',
+    blocking = false, blockable = false,
+    delay = 2.5,
+    timer = 'TOTAL',
+    func = function()
+      G.CONTROLLER.locks.skip_blind = nil
+      return true
+    end
+  }))
+  local _tag = e.UIBox:get_UIE_by_ID('tag_container')
+  G.GAME.skips = (G.GAME.skips or 0) + 1
+  if _tag then
+    -- Load up the next ante
+    G.GAME.round_resets.blind_states.Boss = 'Defeated'
+    G.GAME.voucher_restock = nil
+    if G.GAME.modifiers.set_eternal_ante and (G.GAME.round_resets.ante == G.GAME.modifiers.set_eternal_ante) then 
+      for k, v in ipairs(G.jokers.cards) do
+        v:set_eternal(true)
+      end
+    end
+    if G.GAME.modifiers.set_joker_slots_ante and (G.GAME.round_resets.ante == G.GAME.modifiers.set_joker_slots_ante) then 
+        G.jokers.config.card_limit = 0
+    end
+    G.GAME.round_resets.blind_ante = G.GAME.round_resets.ante + 1
+    delay(0.4); ease_ante(1); delay(0.4); check_for_unlock({type = 'ante_up', ante = G.GAME.round_resets.ante + 1})
+    G.GAME.round_resets.blind_tags.Small = get_next_tag_key()
+    G.GAME.round_resets.blind_tags.Big = get_next_tag_key()
+    G.GAME.round_resets.blind_tags.Boss = get_next_tag_key('boss')
+    reset_blinds()
+
+    -- Update UI
+    G.blind_prompt_box:get_UIE_by_ID('prompt_dynatext1').config.object.pop_delay = 0
+    G.blind_prompt_box:get_UIE_by_ID('prompt_dynatext1').config.object:pop_out(5)
+    G.blind_prompt_box:get_UIE_by_ID('prompt_dynatext2').config.object.pop_delay = 0
+    G.blind_prompt_box:get_UIE_by_ID('prompt_dynatext2').config.object:pop_out(5) 
+    G.E_MANAGER:add_event(Event({
+      trigger = 'before', delay = 0.2,
+      func = function()
+        G.blind_prompt_box.alignment.offset.y = -10
+        G.blind_select.alignment.offset.y = 40
+        G.blind_select.alignment.offset.x = 0
+        return true
+      end
+    }))
+    G.E_MANAGER:add_event(Event({
+      trigger = 'immediate',
+      func = function()
+        G.blind_select:remove()
+        G.blind_prompt_box:remove()
+        G.blind_select = nil
+        delay(0.2)
+        G.STATE_COMPLETE = false
+        G:update_blind_select()
+
+        -- Trigger tag effects
+        add_tag(_tag.config.ref_table)
+        play_sound('generic1')
+        G.E_MANAGER:add_event(Event({
+          trigger = 'immediate',
+          func = function()
+            delay(0.3)
+            SMODS.calculate_context({skip_blind = true})
+            save_run()
+            for i = 1, #G.GAME.tags do
+              G.GAME.tags[i]:apply_to_run({type = 'immediate'})
+            end
+            for i = 1, #G.GAME.tags do
+              if G.GAME.tags[i]:apply_to_run({type = 'new_blind_choice'}) then break end
+            end
+            return true
+          end
+        }))
+
+        return true
+      end
+    }))
+  end
+end
+
+'''
+
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "G.FUNCS.skip_blind = function(e)"
+position = 'after'
+match_indent = true
+payload = '''
+if G.GAME.blind_on_deck == 'Boss' then
+  G.FUNCS.pdem_skip_boss_blind(e)
+  return
+end
+'''
+
+
+
+
+# G.FUNCS.HUD_blind_debuff_prefix
+# Fix Wheel description
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = "e.config.ref_table.val = ''..G.GAME.probabilities.normal"
+position = 'at'
+match_indent = true
+payload = '''
+local n, d = SMODS.get_probability_vars(G.GAME.blind, 1, 7, 'wheel')
+e.config.ref_table.val = localize{ key = 'pdem_bl_wheel', type = 'variable', vars = {n, d}}
+'''
+
+
+# G.FUNCS.draw_from_deck_to_hand 
+# Used by the riff-raff deck
+[[patches]]
+[patches.pattern]
+target = 'functions/button_callbacks.lua'
+pattern = '''G.FUNCS.draw_from_hand_to_deck()'''
+position = 'after'
+match_indent = true
+payload = '''SMODS.calculate_context({pdem_post_ending_booster = true, booster = booster_obj})'''

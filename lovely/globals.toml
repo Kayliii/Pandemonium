@@ -1,0 +1,16 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# Game:set_globals
+# Use distinct colors for hands and discards so they can be modified
+[[patches]]
+[patches.pattern]
+target = 'globals.lua'
+pattern = "G.C.UI_MULT = copy_table(G.C.RED)"
+position = 'after'
+match_indent = true
+payload = '''G.C.UI_HANDS = copy_table(G.C.BLUE)
+G.C.UI_DISCARDS = copy_table(G.C.RED)
+'''

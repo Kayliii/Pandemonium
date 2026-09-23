@@ -1,0 +1,248 @@
+[manifest]
+version = '1.0.0'
+dump_lua = true
+priority = 1
+
+# G.FUNCS.evaluate_play
+# Implement a destroyed cards career stat
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.calculate_context({scoring_hand = scoring_hand, remove_playing_cards = true, removed = cards_destroyed})'''
+position = 'after'
+match_indent = true
+payload = '''
+inc_career_stat('pdem_playing_cards_destroyed', #cards_destroyed)
+check_for_unlock({ type = 'career_stat', statname = 'pdem_playing_cards_destroyed' })
+'''
+
+# G.FUNCS.discard_cards_from_highlighted
+# Implement a destroyed cards career stat
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.calculate_context({remove_playing_cards = true, removed = destroyed_cards})'''
+position = 'after'
+match_indent = true
+payload = '''
+inc_career_stat('pdem_playing_cards_destroyed', #destroyed_cards)
+check_for_unlock({ type = 'career_stat', statname = 'pdem_playing_cards_destroyed' })
+'''
+
+# G.FUNCS.evaluate_play
+# Implement a played hand size 6+ career stat
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''G.FUNCS.evaluate_play = function(e)'''
+position = 'after'
+match_indent = true
+payload = '''
+for i = 1, #G.play.cards do
+  local count = tostring(i)
+  inc_career_stat('pdem_played_' .. count .. '_plus', 1)
+  check_for_unlock({ type = 'career_stat', statname = 'pdem_played_' .. count .. '_plus' })
+end
+'''
+
+# G.FUNCS.evaluate_play
+# Implement proper display and scoring of shadow hands
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''local hand_text_set = false'''
+position = 'before'
+match_indent = true
+payload = '''
+SMODS.calculate_context({full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, pdem_shadow_hand = true})
+'''
+
+# G.FUNCS.evaluate_play
+# Implement proper display and scoring of shadow hands
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.calculate_context({full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, before = true})'''
+position = 'after'
+match_indent = true
+payload = '''
+local flipped_jokers = SMODS.find_card('j_pdem_flipped', false)
+
+for _, card in ipairs(flipped_jokers) do
+  for _, shadow_hand_data in ipairs(card.ability.extra.shadow_hands) do
+    local shadow_name = shadow_hand_data.hand_name
+
+    -- Track shadow hand usage
+    G.GAME.hands[shadow_name].played = G.GAME.hands[shadow_name].played + 1
+    G.GAME.hands[shadow_name].played_this_round = G.GAME.hands[shadow_name].played_this_round + 1
+    G.GAME.hands[shadow_name].played_this_ante = G.GAME.hands[shadow_name].played_this_ante + 1
+    G.GAME.last_hand_played = shadow_name
+    set_hand_usage(shadow_name)
+    G.GAME.hands[shadow_name].visible = true
+
+    -- Calculate shadow hand context
+    SMODS.calculate_context({full_hand = shadow_hand_data.full_hand, scoring_hand = shadow_hand_data.scoring_hand, scoring_name = shadow_name, poker_hands = shadow_hand_data.poker_hands, before = true})
+  end
+end
+'''
+
+# G.FUNCS.evaluate_play
+# Implement proper display and scoring of shadow hands
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.calculate_context({initial_scoring_step = true, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands})'''
+position = 'before'
+match_indent = true
+payload = '''
+local display_level = G.GAME.hands[text].level
+local char_limit_level = 7
+
+for _, card in ipairs(flipped_jokers) do
+  for _, shadow_hand_data in ipairs(card.ability.extra.shadow_hands) do
+    local shadow_name = shadow_hand_data.hand_name
+
+    -- Handle shadow hand display text
+    local combined_name = disp_text .. ' + ' .. shadow_hand_data.display_name
+    disp_text = combined_name
+
+    local combined_level = display_level .. '+' .. G.GAME.hands[shadow_name].level
+    if #combined_level > char_limit_level then
+      combined_level = '<+' .. G.GAME.hands[shadow_name].level
+    end
+    display_level = combined_level
+
+    -- Track shadow hand scoring
+    local shadow_chips = G.GAME.hands[shadow_name].chips
+    local shadow_mult = G.GAME.hands[shadow_name].mult
+    local combined_chips = hand_chips + shadow_chips
+    local combined_mult = mult + shadow_mult
+    hand_chips = combined_chips
+    mult = combined_mult
+    SMODS.Scoring_Parameters[SMODS.Scoring_Parameter_Calculation.chips]:modify(shadow_chips)
+    SMODS.Scoring_Parameters[SMODS.Scoring_Parameter_Calculation.mult]:modify(shadow_mult)
+
+    -- Display changes
+    G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2, func = function()
+      update_hand_text({
+        immediate = true,
+        nopulse = false,
+        delay = 0
+      }, {
+        handname = combined_name,
+        level = combined_level
+      })
+      card:juice_up(0.8, 0.5)
+      play_sound('tarot1')
+      return true
+    end}))
+    G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.9, func = function()
+      update_hand_text({immediate = true, nopulse = false, delay = 0}, {chips = combined_chips})
+      card:juice_up(0.8, 0.5)
+      if shadow_chips > 0 then play_sound('chips1') end
+      return true
+    end}))
+    G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.9, func = function()
+      update_hand_text({immediate = true, nopulse = false, delay = 0}, {mult = combined_mult})
+      card:juice_up(0.8, 0.5)
+      if shadow_mult > 0 then play_sound('multhit1') end
+      return true
+    end}))
+  end
+end
+
+delay(0.3)
+
+'''
+
+
+
+# G.FUNCS.evaluate_play 
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''for _, _area in ipairs(SMODS.get_card_areas('jokers')) do
+                for _, _joker in ipairs(_area.cards) do'''
+position = 'after'
+match_indent = true
+payload = '''
+if _joker.ability.set == 'Joker' then
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = """for _, _area in ipairs(SMODS.get_card_areas('individual')) do
+                local other_key = 'other_unknown'"""
+position = 'before'
+match_indent = true
+payload = '''
+end
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''for _, area in ipairs(SMODS.get_card_areas('jokers')) do for _, _card in ipairs(area.cards) do'''
+position = 'after'
+match_indent = true
+payload = '''
+if _card.ability.set == 'Joker' then
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''for _, _area in ipairs(SMODS.get_card_areas('jokers')) do'''
+position = 'before'
+match_indent = true
+payload = '''
+--end
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.trigger_effects(effects, _card)'''
+position = 'after'
+match_indent = true
+payload = '''
+end
+'''
+
+
+# new_round
+# Used by the riff-raff deck
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.calculate_context({setting_blind = true, blind = G.GAME.round_resets.blind})'''
+position = 'before'
+match_indent = true
+payload = '''SMODS.calculate_context({pdem_pre_setting_blind = true, blind = G.GAME.round_resets.blind})'''
+
+# G.FUNCS.evaluate_round
+# Used by the riff-raff deck
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''SMODS.calculate_context{round_eval = true}'''
+position = 'before'
+match_indent = true
+payload = '''SMODS.calculate_context{pdem_pre_round_eval = true}'''
+
+# G.FUNCS.draw_from_deck_to_hand 
+# Used by the riff-raff deck
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''local flags = SMODS.calculate_context({drawing_cards = true, amount = math.max(limit, 0)})'''
+position = 'before'
+match_indent = true
+payload = '''SMODS.calculate_context({pdem_pre_drawing_cards = true, amount = math.max(limit, 0)})'''
+
+# G.FUNCS.evaluate_play 
+# Fix Splash for riff-raff deck
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''local splashed = SMODS.always_scores(G.play.cards[i]) or next(find_joker('Splash'))'''
+position = 'at'
+match_indent = true
+payload = '''local splashed = SMODS.always_scores(G.play.cards[i]) or next(SMODS.find_card('j_splash'))'''
