@@ -141,7 +141,7 @@ target = 'card.lua'
 pattern = '''context.other_card:get_id() == 12 then'''
 position = 'at'
 match_indent = true
-payload = '''context.other_card:get_id() == 12 or context.other_card.config.center.config.pdem_is_rank_Queen then'''
+payload = '''(context.other_card:get_id() == 12 or context.other_card.config.center.config.pdem_is_rank_Queen) then'''
 
 # Card:calculate_joker
 # Patch Baron to work with Riff-Raff Deck correctly
@@ -151,7 +151,7 @@ target = 'card.lua'
 pattern = '''context.other_card:get_id() == 13 then'''
 position = 'at'
 match_indent = true
-payload = '''context.other_card:get_id() == 13 or context.other_card.config.center.config.pdem_is_rank_King then'''
+payload = '''(context.other_card:get_id() == 13 or context.other_card.config.center.config.pdem_is_rank_King) then'''
 
 # Card:calculate_joker
 # Patch Hack to work with Riff-Raff Deck correctly

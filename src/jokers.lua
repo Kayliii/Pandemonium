@@ -8,6 +8,7 @@ SMODS.Joker {
   pos = { x = 7, y = 1 },
   config = {
     pdem_is_face_card = true,
+    pdem_is_rank_3 = true,
     extra = { mult = 2, pdem_enabled = false  }
   },
   loc_vars = function(self, info_queue, card)
@@ -22,10 +23,10 @@ SMODS.Joker {
       if card.ability.pdem_enabled then
         local other_joker_left = nil
         local other_joker_right = nil
-        for i = 1, #G.jokers.cards do
-          if G.jokers.cards[i] == card then
-            other_joker_left = G.jokers.cards[i - 1]
-            other_joker_right = G.jokers.cards[i + 1]
+        for i = 1, #card.area.cards do
+          if card.area.cards[i] == card then
+            other_joker_left = card.area.cards[i - 1]
+            other_joker_right = card.area.cards[i + 1]
           end
         end
 
@@ -49,6 +50,7 @@ SMODS.Joker {
   pos = { x = 8, y = 1 },
   config = {
     pdem_is_face_card = true,
+    pdem_is_rank_3 = true,
     extra = { chips = 10, pdem_enabled = false }
   },
   loc_vars = function(self, info_queue, card)
@@ -63,10 +65,10 @@ SMODS.Joker {
       if card.ability.pdem_enabled then
         local other_joker_left = nil
         local other_joker_right = nil
-        for i = 1, #G.jokers.cards do
-          if G.jokers.cards[i] == card then
-            other_joker_left = G.jokers.cards[i - 1]
-            other_joker_right = G.jokers.cards[i + 1]
+        for i = 1, #card.area.cards do
+          if card.area.cards[i] == card then
+            other_joker_left = card.area.cards[i - 1]
+            other_joker_right = card.area.cards[i + 1]
           end
         end
 
@@ -579,10 +581,10 @@ SMODS.Joker {
     return { vars = {self.config.pdem_unlock} }
   end,
   loc_vars = function (self, info_queue, card)
-    if card.area and card.area == G.jokers then
+    if card.area --[[and card.area == G.jokers]] then
       local other_joker
-      for i = 1, #G.jokers.cards do
-        if G.jokers.cards[i] == card then other_joker = G.jokers.cards[i + 1] end
+      for i = 1, #card.area.cards do
+        if card.area.cards[i] == card then other_joker = card.area.cards[i + 1] end
       end
       local compatible = is_pointer_compatible(other_joker, card)
 
@@ -630,9 +632,9 @@ SMODS.Joker {
       -- Charge gain
       if context.post_trigger then
         local other_joker_left = nil
-        for i = 1, #G.jokers.cards do
-          if G.jokers.cards[i] == card then
-            other_joker_left = G.jokers.cards[i - 1]
+        for i = 1, #card.area.cards do
+          if card.area.cards[i] == card then
+            other_joker_left = card.area.cards[i - 1]
           end
         end
 
@@ -648,9 +650,9 @@ SMODS.Joker {
       -- Retriggers
       if context.retrigger_joker_check then
         local other_joker_right = nil
-        for i = 1, #G.jokers.cards do
-          if G.jokers.cards[i] == card then
-            other_joker_right = G.jokers.cards[i + 1]
+        for i = 1, #card.area.cards do
+          if card.area.cards[i] == card then
+            other_joker_right = card.area.cards[i + 1]
           end
         end
 
@@ -784,29 +786,34 @@ SMODS.Joker {
   },
   loc_vars = function (self, info_queue, card)
     local main_end = nil
-    if card.area and card.area == G.jokers then
-      main_end = {{
-        n = G.UIT.C,
-        config = { align = "bm", minh = 0.4 },
-        nodes = {{
-          n = G.UIT.C,
-          config = {
-            ref_table = card,
-            align = "m",
-            colour = card.ability.extra.pdem_active and mix_colours(G.C.GREEN, G.C.JOKER_GREY, 0.8) or mix_colours(G.C.RED, G.C.JOKER_GREY, 0.8),
-            r = 0.05,
-            padding = 0.06
-          },
-          nodes = {{
-            n = G.UIT.T,
-            config = {
-              text = ' ' .. localize((card.ability.extra.pdem_active and 'pdem_active' or 'pdem_inactive')) .. ' ',
-              colour = G.C.UI.TEXT_LIGHT,
-              scale = 0.32 * 0.8 
-            }
+    if card.area then
+      for _, v in ipairs(SMODS.get_card_areas('jokers')) do
+        if card.area == v then
+          main_end = {{
+            n = G.UIT.C,
+            config = { align = "bm", minh = 0.4 },
+            nodes = {{
+              n = G.UIT.C,
+              config = {
+                ref_table = card,
+                align = "m",
+                colour = card.ability.extra.pdem_active and mix_colours(G.C.GREEN, G.C.JOKER_GREY, 0.8) or mix_colours(G.C.RED, G.C.JOKER_GREY, 0.8),
+                r = 0.05,
+                padding = 0.06
+              },
+              nodes = {{
+                n = G.UIT.T,
+                config = {
+                  text = ' ' .. localize((card.ability.extra.pdem_active and 'pdem_active' or 'pdem_inactive')) .. ' ',
+                  colour = G.C.UI.TEXT_LIGHT,
+                  scale = 0.32 * 0.8 
+                }
+              }}
+            }}
           }}
-        }}
-      }}
+          break
+        end
+      end
     end
     return { main_end = main_end, vars = {card.ability.extra.set_ante} }
   end,

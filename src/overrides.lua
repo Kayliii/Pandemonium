@@ -920,6 +920,23 @@ function SMODS.get_enhancements(card, extra_only)
   return result
 end
 
+local calculate_enhancement_old = Card.calculate_enhancement
+function Card:calculate_enhancement(context)
+  local result = calculate_enhancement_old(self, context)
+  if result then return result end
+
+  if not self.ability.pdem_enhancement then return nil end
+
+  local center = G.P_CENTERS[self.ability.pdem_enhancement]
+  if center.calculate and type(center.calculate) == 'function' then
+    local o = center:calculate(self.ability.pdem_enhancement_fake, context)
+    if o then
+      if not o.card then o.card = self end
+      return o
+    end
+  end
+end
+
 ---------------------------
 --- More Card Overrides ---
 ---------------------------
@@ -946,7 +963,8 @@ local get_chip_x_mult_old = Card.get_chip_x_mult
 function Card:get_chip_x_mult ()
   local ret = get_chip_x_mult_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_chip_x_mult(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_chip_x_mult(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -963,8 +981,9 @@ end
 local get_chip_h_x_mult_old = Card.get_chip_h_x_mult
 function Card:get_chip_h_x_mult ()
   local ret = get_chip_h_x_mult_old(self)
-  if self.ability.pdem_enhancement then
-    return ret * Card.get_chip_h_x_mult(self.ability.pdem_enhancement_fake)
+  if self.ability.pdem_enhancement then    
+    local ret2 = Card.get_chip_h_x_mult(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -974,7 +993,8 @@ function Card:get_chip_x_bonus ()
   if self.debuff then return 0 end
   local ret = get_chip_x_bonus_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_chip_x_bonus(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_chip_x_bonus(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -994,7 +1014,8 @@ function Card:get_chip_h_x_bonus ()
   if self.debuff then return 0 end
   local ret = get_chip_h_x_bonus_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_chip_h_x_bonus(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_chip_h_x_bonus(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -1024,7 +1045,8 @@ function Card:get_bonus_x_score ()
   if self.debuff then return 0 end
   local ret = get_bonus_x_score_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_bonus_x_score(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_bonus_x_score(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -1044,7 +1066,8 @@ function Card:get_bonus_h_x_score ()
   if self.debuff then return 0 end
   local ret = get_bonus_h_x_score_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_bonus_h_x_score(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_bonus_h_x_score(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -1064,7 +1087,8 @@ function Card:get_bonus_x_blind_size ()
   if self.debuff then return 0 end
   local ret = get_bonus_x_blind_size_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_bonus_x_blind_size(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_bonus_x_blind_size(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
   end
   return ret
 end
@@ -1084,7 +1108,18 @@ function Card:get_bonus_h_x_blind_size ()
   if self.debuff then return 0 end
   local ret = get_bonus_h_x_blind_size_old(self)
   if self.ability.pdem_enhancement then
-    return ret * Card.get_bonus_h_x_blind_size(self.ability.pdem_enhancement_fake)
+    local ret2 = Card.get_bonus_h_x_blind_size(self.ability.pdem_enhancement_fake)
+    return (ret ~= 0 and ret or 1) * (ret2 ~= 0 and ret2 or 1)
+  end
+  return ret
+end
+
+local get_h_dollars_old = Card.get_h_dollars
+function Card:get_h_dollars ()
+  if self.debuff then return 0 end
+  local ret = get_h_dollars_old(self)
+  if self.ability.pdem_enhancement then
+    return ret + Card.get_h_dollars(self.ability.pdem_enhancement_fake)
   end
   return ret
 end

@@ -4,7 +4,16 @@ dump_lua = true
 priority = 1
 
 # get_X_same
-# Handle joker hands appropriately 
+# Handle joker hands appropriately
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+pattern = """function get_X_same(num, hand, or_more)"""
+position = 'after'
+match_indent = true
+payload = '''local joker_vals = {}
+local joker_virtual_rank = nil
+'''
 [[patches]]
 [patches.pattern]
 target = 'functions/misc_functions.lua'
@@ -18,24 +27,71 @@ if i ~= j then
   if hand[i].base.value ~= 'pdem_joker_rank' and hand[j].base.value ~= 'pdem_joker_rank' then
     if hand[i]:get_id() == hand[j]:get_id() then
       table.insert(curr, hand[j])
+      joker_virtual_rank = nil
     end
   elseif hand[i].base.value ~= 'pdem_joker_rank' then
     if hand[j].config.center.config['pdem_is_rank_'..hand[i].base.value] then
       table.insert(curr, hand[j])
+      joker_virtual_rank = hand[i]:get_id()
     end
   elseif hand[j].base.value ~= 'pdem_joker_rank' then
     if hand[i].config.center.config['pdem_is_rank_'..hand[j].base.value] then
       table.insert(curr, hand[j])
+      joker_virtual_rank = hand[j]:get_id()
     end
   elseif hand[i].config.center_key == hand[j].config.center_key then
     table.insert(curr, hand[j])
+    joker_virtual_rank = nil
   else
-    for rank, _ in pairs(SMODS.Ranks) do
-      if hand[i].config.center.config['pdem_is_rank_'..rank] and hand[j].config.center.config['pdem_is_rank_'..rank] then
+    for key, rank in pairs(SMODS.Ranks) do
+      if hand[i].config.center.config['pdem_is_rank_'..key] and hand[j].config.center.config['pdem_is_rank_'..key] then
         table.insert(curr, hand[j])
+        joker_virtual_rank = rank.id
         break
       end
     end
+  end
+end
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+pattern = """if or_more and (#curr >= num) or (#curr == num) then
+      vals[curr[1]:get_id()] = curr
+    end"""
+position = 'at'
+match_indent = true
+payload = '''
+if curr[1].base.value ~= 'pdem_joker_rank' then
+  if or_more and (#curr >= num) or (#curr == num) then
+    vals[curr[1]:get_id()] = curr
+  end
+else
+  local success = false
+  if joker_virtual_rank then
+    if or_more and (#curr >= num) or (#curr == num) then
+      vals[joker_virtual_rank] = curr
+      success = true
+      joker_virtual_rank = nil
+    end
+  end
+  if not success and (or_more and (#curr >= num) or (#curr == num)) then
+    joker_vals[curr[1].config.center_key] = curr
+  end
+end
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+pattern = """for i=#vals, 1, -1 do
+    if next(vals[i]) then table.insert(ret, vals[i]) end
+  end"""
+position = 'after'
+match_indent = true
+payload = '''
+for _, item in pairs(joker_vals) do
+  if next(item) then
+    table.insert(ret, item)
   end
 end
 '''

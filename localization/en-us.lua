@@ -128,8 +128,8 @@ return {
         text = {
           'Does {C:attention}nothing{}',
           'for every card',
-          '{C:inactive}({}{C:attention}played{}{C:inactive} or',
-          '{C:attention}held in hand{}{C:inactive}){}',
+          '{C:inactive}({}{C:attention}scored{}{C:inactive}, {}{C:attention}unscored{}{C:inactive},',
+          '{C:inactive} or {}{C:attention}held in hand{}{C:inactive}){}',
         },
         unlock = {
           '{E:1,s:1.3}?????',

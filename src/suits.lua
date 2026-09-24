@@ -79,7 +79,8 @@ SMODS.DrawStep {
             self.VT.h/(self.T.h)
           )
           love.graphics.pop()
-          love.graphics.setCanvas(old_canvas)
+          love.graphics.setCanvas{old_canvas, depthstencil = SMODS.stencil_canvas}
+
           G.SHADERS['pdem_clip']:send('clip_texture', maskCanvas)
           sprite.role.draw_major = self
           sprite:draw_shader('pdem_clip', nil, nil, nil, self.children.center)

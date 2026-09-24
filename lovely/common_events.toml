@@ -96,3 +96,36 @@ if card_type == 'Joker' and card.ability.pdem_enhancement then
   end
 end
 '''
+
+# eval_card
+# Make enhancements work correctly.
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''if card.ability.set == 'Enhanced' then'''
+position = 'at'
+match_indent = true
+payload = '''
+if card.ability.set == 'Enhanced' or card.ability.pdem_enhancement then
+'''
+
+# eval_card
+# Make enhancements work correctly.
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''ret.playing_card.x_mult = h_x_mult'''
+position = 'after'
+match_indent = true
+payload = '''
+--sendInfoMessage(h_x_mult, 'get_chip_h_x_mult')
+'''
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''ret.playing_card.x_mult = h_x_mult'''
+position = 'before'
+match_indent = true
+payload = '''
+--sendInfoMessage(h_x_mult, 'get_chip_h_x_mult(after)')
+'''

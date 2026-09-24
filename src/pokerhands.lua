@@ -104,7 +104,7 @@ PdemPokerHand {
   end,
   score = { mult =  25, chips =  480, l_mult =  4, l_chips =  45 },
   example = get_X_of_Y_kinds_example(7, 1),
-  evaluate = function (parts, hand) return get_X_same(7, hand, true) end,
+  evaluate = function (parts, hand) return pdem_get_X_same_filtered(7, hand) end,
   visible = false,
   modify_display_text = function (self, _, scoring_hand)
     if config.filter_profanity then
@@ -125,7 +125,7 @@ PdemPokerHand {
   evaluate = function (parts, hand)
     local flushes = pdem_get_flushes(hand)
     for _, flush in ipairs(flushes) do
-      local seven = get_X_same(7, flush, true)
+      local seven = pdem_get_X_same_filtered(7, flush)
       if next(seven) then return seven end
     end
     return {}
