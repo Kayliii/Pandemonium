@@ -9,6 +9,15 @@ local set_moon_badge = function (self, card, badges)
   )
 end
 
+local set_debris_badge = function (self, card, badges)
+  badges[#badges + 1] = create_badge(
+    localize('pdem_space_debris'),
+    get_type_colour(card.config.center or card.config, card),
+    SMODS.ConsumableTypes.Planet.text_colour,
+    1.2
+  )
+end
+
 SMODS.Consumable {
   key = 'void',
   set = 'Planet',
@@ -146,6 +155,27 @@ SMODS.Consumable {
 }
 
 SMODS.Consumable {
+  key = 'oberon',
+  set = 'Planet',
+  atlas = 'tarots',
+  pos = { x = 1, y = 3 },
+  cost = 3,
+  config = { hand_type = 'pdem_too_many_pairs', softlock = true },
+  loc_vars = function(self, info_queue, card)
+    return {
+      vars = {
+        G.GAME.hands[card.ability.hand_type].level,
+        localize(card.ability.hand_type, 'poker_hands'),
+        G.GAME.hands[card.ability.hand_type].l_mult,
+        G.GAME.hands[card.ability.hand_type].l_chips,
+        colours = { (G.GAME.hands[card.ability.hand_type].level == 1 and G.C.UI.TEXT_DARK or G.C.HAND_LEVELS[math.min(7, G.GAME.hands[card.ability.hand_type].level)]) }
+      }
+    }
+  end,
+  set_card_type_badge = set_moon_badge
+}
+
+SMODS.Consumable {
   key = 'triton',
   set = 'Planet',
   atlas = 'tarots',
@@ -185,12 +215,27 @@ SMODS.Consumable {
       }
     }
   end,
-  set_card_type_badge = function (self, card, badges)
-    badges[#badges + 1] = create_badge(
-      localize('pdem_space_debris'),
-      get_type_colour(card.config.center or card.config, card),
-      SMODS.ConsumableTypes.Planet.text_colour,
-      1.2
-    )
-  end
+  set_card_type_badge = set_debris_badge,
+}
+
+SMODS.Consumable {
+  key = 'coffee_pot',
+  set = 'Planet',
+  no_collection = true,
+  atlas = 'tarots',
+  pos = { x = 2, y = 3 },
+  cost = 3,
+  config = { hand_type = 'pdem_flush_all_jokers', softlock = true },
+  loc_vars = function(self, info_queue, card)
+    return {
+      vars = {
+        G.GAME.hands[card.ability.hand_type].level,
+        localize(card.ability.hand_type, 'poker_hands'),
+        G.GAME.hands[card.ability.hand_type].l_mult,
+        G.GAME.hands[card.ability.hand_type].l_chips,
+        colours = { (G.GAME.hands[card.ability.hand_type].level == 1 and G.C.UI.TEXT_DARK or G.C.HAND_LEVELS[math.min(7, G.GAME.hands[card.ability.hand_type].level)]) }
+      }
+    }
+  end,
+  set_card_type_badge = set_debris_badge,
 }

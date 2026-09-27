@@ -128,6 +128,20 @@ function pdem_get_flushes (hand)
   return result
 end
 
+--[[function pdem_n_of_a_kind (amount, hand)
+  local cards = pdem_get_X_same_filtered(amount, hand)
+  if next(cards) then
+    local result = {}
+    for _, set in ipairs(cards) do
+      local subset = {}
+      for i = 1, amount do table.insert(subset, set[i]) end
+      table.insert(result, subset)
+    end
+    return result
+  end
+  return {}
+end]]
+
 function pdem_n_of_a_kind (amount, hand)
   local cards = pdem_get_X_same_filtered(amount, hand)
   if next(cards) then
@@ -167,17 +181,15 @@ function pdem_get_X_same_filtered (num, hand)
   local vals = {}
   local joker_vals = {}
   local ambiguous_items = {}
-  local rank_map = {}
 
-  for rank_key, rank in pairs(SMODS.Ranks) do
-    rank_map[rank.id] = rank_key
+  for i = 1, SMODS.Rank.max_id.value do
+    vals[i] = {}
   end
 
   for i=#hand, 1, -1 do
     local card = hand[i]
     if card.base.value ~= 'pdem_joker_rank' then
       local id = card:get_id()
-      if not vals[id] then vals[id] = {} end
       table.insert(vals[id], card)
     else
       local key = card.config.center.key
@@ -187,8 +199,7 @@ function pdem_get_X_same_filtered (num, hand)
       for rank_key, rank in pairs(SMODS.Ranks) do
         if card.config.center.config['pdem_is_rank_'..rank_key] then
           is_ambiguous = true
-          if not vals[rank.id] then vals[rank.id] = {} end
-          --break
+          break
         end
       end
 
@@ -201,7 +212,8 @@ function pdem_get_X_same_filtered (num, hand)
   if #ambiguous_items == 0 then
     -- We can return early
     local result = {}
-    for _, set in pairs(vals) do
+    for i=#vals, 1, -1 do
+      local set = vals[i]
       if #set >= num then table.insert(result, set) end
     end
     for _, set in pairs(joker_vals) do
@@ -247,7 +259,8 @@ function pdem_get_X_same_filtered (num, hand)
 
       for id, _ in pairs(incomplete_groups) do
         if group_sizes[id] < num then
-          if card.config.center.config['pdem_is_rank_'..rank_map[id]] then
+
+          if SMODS.Rank.obj_buffer[id] and card.config.center.config['pdem_is_rank_'..SMODS.Rank.obj_buffer[id]] then
             group_sizes[id] = group_sizes[id] + 1
             solution[index] = id
             disambiguate(index + 1)
@@ -329,7 +342,8 @@ function pdem_get_X_same_filtered (num, hand)
   end
 
   local result = {}
-  for _, set in pairs(vals) do
+  for i=#vals, 1, -1 do
+    local set = vals[i]
     if #set >= num then table.insert(result, set) end
   end
   for _, set in pairs(joker_vals) do

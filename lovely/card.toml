@@ -464,3 +464,16 @@ match_indent = true
 payload = '''
 if context.repetition and ((not context.pdem_joker_only and self.base.value ~= 'pdem_joker_rank') or (context.pdem_joker_only and self.base.value == 'pdem_joker_rank')) then
 '''
+
+
+
+
+# Card:get_chip_mult
+# This fixes a crash for some reason? Not sure what's going on with this... Maybe it's from the fake card you get from enhancing things?
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''ret = ret + self.ability.mult'''
+position = 'at'
+match_indent = true
+payload = '''ret = ret + (self.ability.mult or 0)'''

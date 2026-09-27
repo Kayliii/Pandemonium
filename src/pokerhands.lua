@@ -197,3 +197,27 @@ PdemPokerHand {
     end
   end
 }
+
+PdemPokerHand {
+  key = 'flush_all_jokers',
+  no_collection = true,
+  visible = false,
+  score = { mult = 8, chips = 60, l_mult = 4, l_chips = 35 },
+  example = {{'pdem_JOKER_9', true},{'pdem_JOKER_9', true},{'pdem_JOKER_7', true},{'pdem_JOKER_8', true},{'pdem_JOKER_8', true}},
+  evaluate = function (parts, hand)
+    local flushes = pdem_get_flushes(hand)
+    for _, flush in ipairs(flushes) do
+      local jokers = {}
+      for _, card in ipairs(flush) do
+        if card.base.value == 'pdem_joker_rank' then
+          table.insert(jokers, card)
+        end
+      end
+
+      if #jokers >= 5 then
+        return {jokers}
+      end
+    end
+    return {}
+  end
+}

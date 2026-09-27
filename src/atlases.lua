@@ -77,6 +77,13 @@ SMODS.Atlas {
   py = 18,
 }
 
+SMODS.Atlas {
+  key = "boosters",
+  path = "boosters.png",
+  px = 71,
+  py = 95,
+}
+
 SMODS.Shader {
   key = 'clip',
   path = 'clip.fs',

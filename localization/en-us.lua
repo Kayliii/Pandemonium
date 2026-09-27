@@ -78,8 +78,26 @@ return {
           "{C:chips}+#4#{} chips",
         },
       },
+      c_pdem_oberon = {
+        name = 'Oberon',
+        text = {
+          "{S:0.8}({S:0.8,V:1}lvl.#1#{S:0.8}){} Level up",
+          "{C:attention}#2#",
+          "{C:mult}+#3#{} Mult and",
+          "{C:chips}+#4#{} chips",
+        },
+      },
       c_pdem_teapot = {
         name = 'Teapot',
+        text = {
+          "{S:0.8}({S:0.8,V:1}lvl.#1#{S:0.8}){} Level up",
+          "{C:attention}#2#",
+          "{C:mult}+#3#{} Mult and",
+          "{C:chips}+#4#{} chips",
+        },
+      },
+      c_pdem_coffee_pot = {
+        name = 'Coffee Pot',
         text = {
           "{S:0.8}({S:0.8,V:1}lvl.#1#{S:0.8}){} Level up",
           "{C:attention}#2#",
@@ -420,6 +438,62 @@ return {
           "your {C:attention}Jokers",
         },
       },
+      tag_pdem_tenbou_tag = {
+        name="Tenbō Tag",
+        text={
+          "Gives a free",
+          "{C:attention}Tenbō Pack",
+        },
+      },
+    },
+    pdem_tenbou = {
+      c_pdem_tb_spare = {
+        name = 'Spare Tenbō',
+        text = {
+          'Creates the last {C:pdem_tenbou}Tenbō',
+          'used during this run',
+          '{s:0.8,C:pdem_tenbou}Spare Tenbō{s:0.8} excluded',
+        }
+      },
+      c_pdem_tb_100 = {
+        name = '100 Tenbō',
+        text = {
+          'Your next hand is',
+          'worth {C:chips}+#1#{} Chips',
+        }
+      },
+      c_pdem_tb_1000 = {
+        name = '1 000 Tenbō',
+        text = {
+          'Use {C:attention}before{} playing',
+          'or discarding to',
+          '{C:attention}lose all discards{} and',
+          'double your {C:attention}cashout',
+          '{C:inactive}(Max of {}{C:money}$#1#{}{C:inactive})',
+        }
+      },
+      c_pdem_tb_5000 = {
+        name = '5 000 Tenbō',
+        text = {
+          'Your next hand is',
+          'worth {X:red,C:white} ^#1# {} Mult',
+        }
+      },
+      c_pdem_tb_10000 = {
+        name = '10 000 Tenbō',
+        text = {
+          'Raise the level',
+          'of your next played',
+          '{C:attention}poker hand{} by {C:attention}#1#',
+        }
+      },
+      c_pdem_tb_sakura = {
+        name = 'Cherry Tenbō',
+        text = {
+          'Defeat the current {C:attention}blind{}',
+          '{C:inactive}(On non-consecutive rounds)'
+        }
+      },
     },
     pdem_teuila = {
       c_pdem_te_eye = {
@@ -490,7 +564,30 @@ return {
           "unseeded run to",
           "learn what it does",
         },
-      }
+      },
+      undiscovered_pdem_tenbou = {
+        name = "Not Discovered",
+        text = {
+          "Purchase or use",
+          "this tenbō in an",
+          "unseeded run to",
+          "learn what it does",
+        },
+      },
+      p_pdem_tenbou_normal_1 = {
+        name="Tenbō Pack",
+        text={
+          "Choose {C:attention}#1#{} of up to",
+          "{C:attention}#2#{C:attention} Tenbō{}",
+        },
+      },
+      p_pdem_tenbou_normal_2 = {
+        name="Tenbō Pack",
+        text={
+          "Choose {C:attention}#1#{} of up to",
+          "{C:attention}#2#{C:attention} Tenbō{}",
+        },
+      },
     }
   },
   misc = {
@@ -513,6 +610,7 @@ return {
       pdem_prankster = 'Prankster',
       pdem_fated = 'Fated',
       pdem_teuila = 'Teuila',
+      pdem_tenbou = 'Tenbō',
       pdem_green_seal = 'Green Seal',
     },
     poker_hands = {
@@ -529,7 +627,8 @@ return {
       pdem_flush_fuck = 'Flush Fuck You',
       pdem_full_straight = 'Full Straight',
       pdem_full_straight_flush = 'Full Flush',
-      pdem_oops_all_jokers = 'Oops! All Jokers',
+      pdem_oops_all_jokers = 'Oops! All Jokers', --'Full Circus'
+      pdem_flush_all_jokers = 'Flush Circus',
     },
     poker_hand_descriptions={
       pdem_none = {
@@ -569,6 +668,10 @@ return {
       },
       pdem_oops_all_jokers = {
         '5 or more Joker cards',
+      },
+      pdem_flush_all_jokers = {
+        '5 or more Joker cards',
+        'with the same suit',
       },
     },
     v_text={
@@ -610,9 +713,19 @@ return {
       pdem_upgrade_next = "Next: Upgrade",
       pdem_downgrade_next = "Next: Downgrade",
       k_pdem_teuila = "Teuila",
+      k_pdem_tenbou = "Tenbō",
       k_pdem_jokers = "Jokers",
       b_pdem_teuila_cards = "Teuila Cards",
+      b_pdem_tenbou_cards = "Tenbō",
       k_pdem_plus_teuila = "+1 Teuila",
+      k_pdem_plus_tenbou = "+1 Tenbō",
+
+      k_pdem_tenbou_pack = "Tenbō Pack",
+      --k_pdem_tenbou_normal_1 = "Tenbō Pack",
+      --k_pdem_tenbou_normal_2 = "Tenbō Pack",
+
+      pdem_riichi_bonus = 'Rīchi',
+      pdem_riichi_bonus_ippatsu = 'Ippatsu',
 
       pdem_space_debris = "Debris",
       pdem_moon = "Moon",
@@ -622,6 +735,7 @@ return {
       pdem_score_placeholder = '(chips)',
       pdem_active = 'Active',
       pdem_inactive = 'Inactive',
+      pdem_no_blind = 'No Blind',
       pdem_number_0 = 'Zero',
       pdem_number_1 = 'One',
       pdem_number_2 = 'Two',

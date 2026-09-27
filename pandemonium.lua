@@ -21,6 +21,7 @@ assert(SMODS.load_file('src/overrides.lua'))()
 assert(SMODS.load_file('src/planets.lua'))()
 assert(SMODS.load_file('src/spectrals.lua'))()
 assert(SMODS.load_file('src/teuila.lua'))()
+assert(SMODS.load_file('src/tenbou.lua'))()
 
 -- Modifiers
 assert(SMODS.load_file('src/stickers.lua'))()
