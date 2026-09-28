@@ -496,6 +496,39 @@ return {
       },
     },
     pdem_teuila = {
+      c_pdem_te_horseshoe = {
+        name = 'Horseshoe',
+        text = {
+          'Reroll {C:attention}#1#{}',
+          'selected {C:attention}Joker{} to',
+          'a {C:attention}random{} Joker of',
+          'the same {C:attention}rarity{}',
+        }
+      },
+       c_pdem_te_volcano = {
+        name = 'Volcano',
+        text = {
+          'Destroy {C:attention}all{} Jokers',
+          'to {C:attention}permanently{} increase',
+          'Joker slots by {C:attention}#1#{}',
+        }
+      },
+      c_pdem_te_devil = {
+        name = 'Devil',
+        text = {
+          'Banish {C:attention}#1#{} selected',
+          '{C:attention}Joker{} for the',
+          'rest of {C:attention}this run{}',
+        }
+      },
+      c_pdem_te_ring = {
+        name = 'Engagement Ring',
+        text = {
+          'Destroy a {C:attention}random{}',
+          'Joker to {C:attention}permanently{}',
+          'increase hand size by {C:attention}#1#{}'
+        }
+      },
       c_pdem_te_eye = {
         name = 'Eye',
         text = {
@@ -723,6 +756,8 @@ return {
       k_pdem_tenbou_pack = "Tenbō Pack",
       --k_pdem_tenbou_normal_1 = "Tenbō Pack",
       --k_pdem_tenbou_normal_2 = "Tenbō Pack",
+
+      k_pdem_banish = 'Banished!',
 
       pdem_riichi_bonus = 'Rīchi',
       pdem_riichi_bonus_ippatsu = 'Ippatsu',

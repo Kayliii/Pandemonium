@@ -121,6 +121,36 @@ SMODS.UndiscoveredSprite {
 --------------------
 
 SMODS.Consumable {
+  key = 'te_ring',
+  set = 'pdem_teuila',
+  atlas = 'tarots',
+  pos = { x = 6, y = 0 },
+  cost = 3,
+  config = { extra = { pdem_te_ring_hand_size = 1} },
+  loc_vars = function(self, info_queue, card)
+    return { vars = { card.ability.extra.pdem_te_ring_hand_size } }
+  end,
+  use = function(self, card, area, copier)
+    pdem_use_tarot(card)
+    local targets = {}
+    for _, joker in ipairs(G.jokers.cards) do
+      if not joker.ability.eternal then
+        table.insert(targets, joker)
+      end
+    end
+    local selected = pseudorandom_element(targets, pseudoseed('pdem_te_ring'))
+    SMODS.destroy_cards({selected})
+    G.hand:change_size(card.ability.extra.pdem_te_ring_hand_size)
+  end,
+  can_use = function(self, card)
+    for _, joker in ipairs(G.jokers.cards) do
+      if not joker.ability.eternal then return true end
+    end
+    return false
+  end,
+}
+
+SMODS.Consumable {
   key = 'te_eye',
   set = 'pdem_teuila',
   atlas = 'tarots',
@@ -219,6 +249,96 @@ SMODS.Consumable {
 }
 
 SMODS.Consumable {
+  key = 'te_devil',
+  set = 'pdem_teuila',
+  atlas = 'tarots',
+  pos = { x = 7, y = 0 },
+  cost = 3,
+  config = { max_highlighted = 1 },
+  loc_vars = function(self, info_queue, card)
+    return { vars = { card.ability.max_highlighted } }
+  end,
+  use = function(self, card, area, copier)
+    pdem_use_tarot(card)
+    delay(0.2)
+    for _, joker in ipairs(G.jokers.highlighted) do
+      G.E_MANAGER:add_event(Event({
+        trigger = 'after',
+        delay = 0.2,
+        func = function()
+          local banished_key = joker.config.center.key
+          G.GAME.banned_keys[joker.config.center.key] = true
+          card_eval_status_text(joker, 'extra', nil, nil, nil, {
+            message = localize('k_pdem_banish'),
+            colour = G.C.PURPLE,
+          })
+          SMODS.destroy_cards({joker})
+
+          -- Destroy any other copies of the banished card.
+          local cards_to_destroy = {}
+          for _, a in ipairs({
+            G.deck, G.play, G.discard, G.hand, G.jokers,
+            G.consumeables, G.vouchers, G.shop_jokers,
+            G.shop_vouchers, G.shop_booster, G.pack_cards,
+          }) do
+            if a then
+              for _, c in ipairs(a.cards) do
+                if c.config.center.key == banished_key and not c.ability.eternal then
+                  table.insert(cards_to_destroy, c)
+                end
+              end
+            end
+          end
+          SMODS.destroy_cards(cards_to_destroy)
+          return true
+        end
+      }))
+    end
+  end,
+  can_use = function(self, card)
+    if not (
+      G.jokers and #G.jokers.highlighted > 0 and
+      #G.jokers.highlighted <= card.ability.max_highlighted
+    ) then return false end
+
+    for _, joker in ipairs(G.jokers.highlighted) do
+      if joker.ability.eternal then return false end
+    end
+
+    return true
+  end,
+}
+
+SMODS.Consumable {
+  key = 'te_volcano',
+  set = 'pdem_teuila',
+  atlas = 'tarots',
+  pos = { x = 8, y = 0 },
+  cost = 3,
+  config = { extra = { pdem_te_volcano_joker_size = 1} },
+  loc_vars = function(self, info_queue, card)
+    return { vars = { card.ability.extra.pdem_te_volcano_joker_size } }
+  end,
+  use = function(self, card, area, copier)
+    pdem_use_tarot(card)
+    local targets = {}
+    for _, joker in ipairs(G.jokers.cards) do
+      if not joker.ability.eternal then
+        table.insert(targets, joker)
+      end
+    end
+    SMODS.destroy_cards(targets)
+    G.jokers:change_size(card.ability.extra.pdem_te_volcano_joker_size)
+  end,
+  can_use = function(self, card)
+    for _, joker in ipairs(G.jokers.cards) do
+      if not joker.ability.eternal then return true end
+    end
+    return false
+  end,
+}
+
+SMODS.Consumable {
   key = 'te_wheel',
   set = 'pdem_teuila',
   atlas = 'tarots',
@@ -269,6 +389,56 @@ SMODS.Consumable {
         return false
       end
     end
+    return true
+  end,
+}
+
+SMODS.Consumable {
+  key = 'te_horseshoe',
+  set = 'pdem_teuila',
+  atlas = 'tarots',
+  pos = { x = 9, y = 0 },
+  cost = 3,
+  config = { max_highlighted = 1 },
+  loc_vars = function(self, info_queue, card)
+    return { vars = { card.ability.max_highlighted } }
+  end,
+  use = function(self, card, area, copier)
+    pdem_use_tarot(card)
+    pdem_juice_up_and_flip_cards(G.jokers.highlighted)
+    delay(0.4)
+    for _, c in ipairs(G.jokers.highlighted) do
+      G.E_MANAGER:add_event(Event({
+        trigger = 'after',
+        delay = 0.2,
+        func = function()
+          local rarity = c.config.center.rarity
+          local key = SMODS.poll_object({
+            type = 'Joker',
+            guaranteed = true,
+            rarities = {SMODS.Rarity.obj_buffer[rarity]},
+            --rarity == 4 and {'Legendary'} or {rarity},
+            seed = 'pdem_te_horseshoe'
+          })
+          c:set_ability(G.P_CENTERS[key])
+          return true
+        end
+      }))
+    end
+    pdem_juice_up_and_unflip_cards(G.jokers.highlighted)
+    pdem_unhighlight_all(G.jokers)
+    delay(0.5)
+  end,
+  can_use = function(self, card)
+    if not (
+      G.jokers and #G.jokers.highlighted > 0 and
+      #G.jokers.highlighted <= card.ability.max_highlighted
+    ) then return false end
+
+    for _, joker in ipairs(G.jokers.highlighted) do
+      if joker.ability.eternal then return false end
+    end
+
     return true
   end,
 }

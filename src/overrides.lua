@@ -366,6 +366,14 @@ for _, key in ipairs({'non_perishable_1','mad_world_1', 'monolith_1', 'fragile_1
   ban_cards(key, {{ id = 'c_pdem_te_gate' }})
 end
 
+ban_cards('typecast_1', {
+  { id = 'c_pdem_te_volcano' },
+})
+
+ban_cards('omelette_1', {
+  { id = 'c_pdem_tb_1000' },
+})
+
 ban_cards('knife_1', {
   { id = 'c_pdem_te_laurel' },
 })
@@ -395,6 +403,10 @@ ban_other('golden_needle_1', {
 
 ban_other('jokerless_1', {
   { id = 'bl_pdem_rose', type = 'blind' },
+})
+
+ban_cards('jokerless_1', {
+  { id = 'c_pdem_te_volcano' },
 })
 
 ----------------------

@@ -11,14 +11,15 @@ The following additions are currently available.
 - 15 new Jokers
 - 1 new Deck
 - 2 new Vouchers
-- 6 new Planet Cards (+ 2 secret ones)
+- 7 new Planet Cards (+ 3 secret ones)
 - 1 new Spectral Card
-- 5 Teuila Cards
+- 9 Teuila Cards
+- 6 Tenbō
 - 1 new Seal
-- 1 new Tag
+- 2 new Tags
 - 10 new Blinds
 - 1 new Sticker
-- 6 new Poker Hands (+ 2 secret ones)
+- 7 new Poker Hands (+ 3 secret ones)
 - 4 new Challenges
 
 It also changes a few mechanics that will affect vanilla Jokers; in particular, expect Four Fingers to be affected.
